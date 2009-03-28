@@ -38,6 +38,7 @@ class Ced:
 		self.notebook.append_page(self.scrolledwindow, None)
 
 	def newPage(self, filename):
+		print "opening " + filename
 		b = len(self.documents)
 		a = [gtksourceview.SourceBuffer(), gtksourceview.SourceLanguagesManager()]
 		a.append(a[1].get_language_from_mime_type(mimetypes.guess_type(filename)[0]))
@@ -48,8 +49,12 @@ class Ced:
 		a.append(gtk.ScrolledWindow())
 		a[4].set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 		a[4].add(a[3])
+		a.append(filename)
+		d = open(filename)
+		a[0].set_text(d.read())
+		self.window.set_title(a[5] + " - CodeEDitor")
 		self.documents.append(a)
-		self.notebook.append_page(self.documents[b][4], None)
+		self.notebook.append_page(self.documents[b][4], gtk.Label(filename))
 
 
 	def main(self):
