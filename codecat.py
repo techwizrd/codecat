@@ -116,7 +116,7 @@ class CodeCatWin:
 		self.notebook.set_tab_reorderable(a.hpane, True)
 		self.notebook.append_page(a.hpane, gtk.Label("Scratch Workspace 2"))
 		self.pages = []
-		for x in range(0,11):
+		for x in range(0,5):
 			self.pages.append(gtk.Label("lolz"))
 			self.notebook.append_page(self.pages[x], gtk.Label("Workspace %s" % (x + 1)))
 			self.notebook.set_tab_reorderable(self.pages[x], True)
@@ -158,8 +158,11 @@ class CodeCatEditor(gtk.HPaned):
 		self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 		self.theframe = gtk.Frame()
 		self.theframe.set_label(filename)
-		self.theframe.add(self.scrollwin)
+		#self.theframe.add(self.scrollwin)
 		self.vpane.add(self.theframe)
+		self.eventbox = gtk.EventBox()
+		self.theframe.add(self.eventbox)
+		self.eventbox.add(self.scrollwin)
 		self.sourcebuffer = gtksourceview.SourceBuffer()
 		self.sourceview = gtksourceview.SourceView(self.sourcebuffer)
 		self.filename = filename
@@ -169,11 +172,17 @@ class CodeCatEditor(gtk.HPaned):
 		self.sourceview.set_show_line_numbers(True)
 		self.sourceview.set_smart_home_end(True)
 		self.scrollwin.add(self.sourceview)
+		self.sourceview.connect("button_press_event", self.contextMenu, None)
+		self.hpane.show_all()
 	
-	def splitHoriz(self, widget, newEd):
+	def splitHoriz(self, widget, newEd=None):
+		if newEd == None:
+			newEd = CodeCatEditor()
 		self.vpane.add(newEd.hpane)
 	
-	def splitVert(self, widget, newEd):
+	def splitVert(self, widget, newEd=None):
+		if newEd == None:
+			newEd = CodeCatEditor()
 		self.hpane.add(newEd.hpane)
 	
 	def loadFile(self, widget, filename):
@@ -189,13 +198,30 @@ class CodeCatEditor(gtk.HPaned):
 	def saveFile(self, widget, filename):
 		try:
 			codefile = open(filename, 'w')
-			codefile.write(sourcebuffer.get_text())
+			codefile.write(self.sourcebuffer.get_text())
 			codefile.close()
 		except Exception, e:
 			print str(e)
 	
-	def close(self):
+	def close(self, widget):
 		self.hpane.destroy()
+	
+	def contextMenu(self, widget, event, data=None):
+		print "conte"
+		if(event.button != 3):
+			return False 
+		self.cMenu = gtk.Menu()
+		self.cMenuItems = [gtk.MenuItem("Save File"), gtk.MenuItem("Split Horizontally"),
+							gtk.MenuItem("Split Vertically"), gtk.MenuItem("New Workspace"),
+							gtk.MenuItem("Close Document")]
+		self.cMenuItems[1].connect("activate", self.splitHoriz)
+		self.cMenuItems[2].connect("activate", self.splitVert)
+		self.cMenuItems[4].connect("activate", self.close)
+		for x in self.cMenuItems:
+			x.show()
+			self.cMenu.append(x)
+		self.cMenu.popup(None, None, None, event.button, event.time, None) 
+		return False
 
 if __name__ == "__main__":
 	print "CodeCat v%s" % __version__
